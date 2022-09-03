@@ -1,0 +1,15 @@
+org: dinushab14
+app: freely-take-home-test
+service: freely-take-home-test
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+
+functions:
+  registerUser:
+    handler: handlers/users.registerUser
+    events:
+      - sns: userRegistrations
