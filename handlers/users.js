@@ -13,11 +13,12 @@ exports.registerUser = void 0;
 const usersService = require("../services/usersService");
 const registerUser = (event, _context) => __awaiter(void 0, void 0, void 0, function* () {
     const [{ Sns: { Message: snsMessage } }] = event.Records;
-    console.log(snsMessage);
     const { name, email } = JSON.parse(snsMessage);
-    console.log(`name: ${name}`);
-    console.log(`email: ${email}`);
-    const registeredUser = yield usersService.registerNewUser({ name, email });
-    console.log(`registeredUser: ${JSON.stringify(registeredUser)}`);
+    try {
+        yield usersService.registerNewUser({ name, email });
+    }
+    catch (err) {
+        console.log(err);
+    }
 });
 exports.registerUser = registerUser;

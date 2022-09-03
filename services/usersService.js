@@ -10,11 +10,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerNewUser = void 0;
+const aws_sdk_1 = require("aws-sdk");
+const uuid = require("uuid");
 ;
 const registerNewUser = ({ name, email }) => __awaiter(void 0, void 0, void 0, function* () {
-    return {
-        name,
-        email
+    const dynamoDb = new aws_sdk_1.DynamoDB.DocumentClient();
+    const dbParams = {
+        TableName: process.env.USERS_TABLE,
+        Item: {
+            userId: uuid.v4(),
+            name,
+            email
+        }
     };
+    return dynamoDb.put(dbParams).promise();
 });
 exports.registerNewUser = registerNewUser;

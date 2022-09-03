@@ -7,9 +7,37 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs14.x
+  environment:
+    USERS_TABLE: ${self:service}-usersTable-${sls:stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-usersTable-${sls:stage}"
 
 functions:
   registerUser:
     handler: handlers/users.registerUser
     events:
       - sns: userRegistrations
+
+resources:
+  Resources:
+    UsersTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:service}-usersTable-${sls:stage}
