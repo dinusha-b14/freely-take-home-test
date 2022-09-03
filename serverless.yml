@@ -4,6 +4,13 @@ service: freely-take-home-test
 
 frameworkVersion: '3'
 
+package:
+  patterns:
+    - '!src/**'
+    - '!__tests__/**'
+    - '!tsconfig.json'
+    - '!README.md'
+
 provider:
   name: aws
   runtime: nodejs14.x
@@ -24,7 +31,7 @@ provider:
 
 functions:
   registerUser:
-    handler: handlers/users.registerUser
+    handler: dist/handlers/users.registerUser
     events:
       - sns: userRegistrations
 
