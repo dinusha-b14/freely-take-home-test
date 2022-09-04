@@ -34,7 +34,10 @@ const createNewUser = ({ name, email }: NewUserParameters): Promise<PublishComma
         throw new FreelyError(400, JSON.stringify(error.details));
     }
 
-    return snsClient.send(new PublishCommand({ Message: JSON.stringify(value) }));
+    return snsClient.send(new PublishCommand({
+        Message: JSON.stringify(value),
+        TopicArn: process.env.SNS_TOPIC_ARN
+    }));
 };
 
 export {

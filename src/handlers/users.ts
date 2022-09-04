@@ -14,9 +14,9 @@ const registerUser = async (event, _context) => {
 };
 
 const createUser = async (event, _context) => {
-    const { name, email } = event.body;
-
     try {
+        const { name, email } = JSON.parse(event.body);
+
         await usersService.createNewUser({ name, email });
 
         return {

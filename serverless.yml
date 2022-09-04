@@ -12,13 +12,16 @@ package:
     - '!README.md'
     - '!jest.config.json'
 
+custom:
+  snsTopic: userRegistrations
+
 provider:
   name: aws
   runtime: nodejs14.x
   environment:
     USERS_TABLE: ${self:service}-usersTable-${sls:stage}
     SNS_REGION: ${aws:region}
-    SNS_TOPIC: userRegistrations
+    SNS_TOPIC_ARN: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}
   iam:
     role:
       statements:
@@ -31,12 +34,16 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-usersTable-${sls:stage}"
+        - Effect: Allow
+          Action:
+            - SNS:Publish
+          Resource: "arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}"
 
 functions:
   registerUser:
     handler: dist/handlers/users.registerUser
     events:
-      - sns: ${env:SNS_TOPIC}
+      - sns: ${self:custom.snsTopic}
 
   createUser:
     handler: dist/handlers/users.createUser
