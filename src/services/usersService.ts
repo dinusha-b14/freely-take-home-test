@@ -1,15 +1,14 @@
 'use strict';
 
-import { DynamoDB } from 'aws-sdk';
 import * as uuid from 'uuid';
+import { dbClient } from '../config/dbClient';
 
 interface RegisterNewUserParameters {
     name: String,
     email: String
 };
 
-const registerNewUser = async ({ name, email }: RegisterNewUserParameters): Promise<Object> => {
-    const dynamoDb = new DynamoDB.DocumentClient();
+const registerNewUser = ({ name, email }: RegisterNewUserParameters) => {
     const dbParams = {
         TableName: process.env.USERS_TABLE,
         Item: {
@@ -19,7 +18,7 @@ const registerNewUser = async ({ name, email }: RegisterNewUserParameters): Prom
         }
     };
 
-    return dynamoDb.put(dbParams).promise();
+    return dbClient.put(dbParams).promise();
 };
 
 export {

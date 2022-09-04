@@ -10,6 +10,7 @@ package:
     - '!__tests__/**'
     - '!tsconfig.json'
     - '!README.md'
+    - '!jest.config.json'
 
 provider:
   name: aws
