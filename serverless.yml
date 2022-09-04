@@ -17,6 +17,8 @@ provider:
   runtime: nodejs14.x
   environment:
     USERS_TABLE: ${self:service}-usersTable-${sls:stage}
+    SNS_REGION: ${aws:region}
+    SNS_TOPIC: userRegistrations
   iam:
     role:
       statements:
@@ -34,7 +36,14 @@ functions:
   registerUser:
     handler: dist/handlers/users.registerUser
     events:
-      - sns: userRegistrations
+      - sns: ${env:SNS_TOPIC}
+
+  createUser:
+    handler: dist/handlers/users.createUser
+    events:
+      - httpApi:
+          path: /users
+          method: post
 
 resources:
   Resources:

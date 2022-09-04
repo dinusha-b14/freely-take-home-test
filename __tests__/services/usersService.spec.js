@@ -1,6 +1,7 @@
 'use strict';
 
 const uuid = require('uuid');
+const { GetItemCommand } = require('@aws-sdk/client-dynamodb');
 const { registerNewUser } = require('../../dist/services/usersService');
 const { dbClient } = require('../../dist/config/dbClient');
 
@@ -18,10 +19,12 @@ describe('registerNewUser', () => {
 
         await registerNewUser({ name: 'Amy Santiago', email: 'amy.santiago@theninenine.com' });
 
-        const { Item: createdUser } = await dbClient.get({
+        const getItemCommand = new GetItemCommand({
             TableName: process.env.USERS_TABLE,
             Key: { userId: '71174767-cb39-47c4-9765-a95d161a63e7' }
-        }).promise();
+        });
+
+        const { Item: createdUser } = await dbClient.send(getItemCommand);
 
         expect(createdUser).toEqual({
             userId: '71174767-cb39-47c4-9765-a95d161a63e7',

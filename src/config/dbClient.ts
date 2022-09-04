@@ -1,16 +1,5 @@
 'use strict';
 
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
-const dbClient = new DocumentClient({
-    ...(process.env.MOCK_DYNAMODB_ENDPOINT && {
-        convertEmptyValues: true,
-        endpoint: process.env.MOCK_DYNAMODB_ENDPOINT,
-        sslEnabled: false,
-        region: 'local'
-    })
-});
-
-export {
-    dbClient
-};
+export default new DynamoDBClient({});

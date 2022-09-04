@@ -13,6 +13,27 @@ const registerUser = async (event, _context) => {
     }
 };
 
+const createUser = async (event, _context) => {
+    const { name, email } = event.body;
+
+    try {
+        await usersService.createNewUser({ name, email });
+
+        return {
+            statusCode: 201
+        };
+    } catch (err) {
+        const { statusCode, message } = err;
+        switch(statusCode) {
+            case 400:
+                return { statusCode: 400, body: message };
+            default:
+                return { statusCode: 500, body: message };
+        }
+    }
+};
+
 export {
-    registerUser
+    registerUser,
+    createUser
 };
