@@ -9,7 +9,6 @@ import dbDocClient from '../config/dbDocClient';
 import snsClient from '../config/snsClient';
 import { createUserSchema } from '../schemas/usersSchema';
 
-
 interface NewUserParameters {
     name: string,
     email: string

@@ -14,14 +14,18 @@ package:
 
 custom:
   snsTopic: userRegistrations
+  sqsTopic: messageBoardRegistrations
 
 provider:
   name: aws
   runtime: nodejs14.x
   environment:
     USERS_TABLE: ${self:service}-usersTable-${sls:stage}
-    SNS_REGION: ${aws:region}
+    MESSAGE_BOARDS_TABLE: ${self:service}-messageBoardsTable-${sls:stage}
+    DEPLOYED_AWS_REGION: ${aws:region}
     SNS_TOPIC_ARN: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}
+    SQS_TOPIC_ARN: arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.sqsTopic}
+    SQS_MESSAGE_BOARD_URL: https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/${self:custom.sqsTopic}
   iam:
     role:
       statements:
@@ -37,17 +41,35 @@ provider:
         - Effect: Allow
           Action:
             - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-messageBoardsTable-${sls:stage}"
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
           Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-usersTable-${sls:stage}/index/UserEmailIndex"
         - Effect: Allow
           Action:
             - SNS:Publish
           Resource: "arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}"
+        - Effect: Allow
+          Action:
+            - SQS:SendMessage
+          Resource: "arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.sqsTopic}"
 
 functions:
   registerUser:
     handler: dist/handlers/users.registerUser
     events:
       - sns: ${self:custom.snsTopic}
+
+  registerMessageBoard:
+    handler: dist/handlers/messageBoards.registerMessageBoard
+    events:
+      - sqs: arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.sqsTopic}
 
   createUser:
     handler: dist/handlers/users.createUser
@@ -62,6 +84,13 @@ functions:
       - httpApi:
           path: /users
           method: get
+  
+  createMessageBoard:
+    handler: dist/handlers/messageBoards.createMessageBoard
+    events:
+      - httpApi:
+          path: /message-boards
+          method: post
 
 resources:
   Resources:
@@ -85,3 +114,14 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: 'ALL'
+    MessageBoardsTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: messageBoardId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: messageBoardId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:service}-messageBoardsTable-${sls:stage}
