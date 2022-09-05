@@ -34,7 +34,21 @@ const createMessageBoard = async (event: APIGatewayEvent, _context: Context) => 
     }
 };
 
+const getMessageBoards = async (_event: APIGatewayEvent, _context: Context) => {
+    try {
+        const messageBoards = await messageBoardsService.getAllMessageBoards();
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(messageBoards)
+        };
+    } catch (err) {
+        return { statusCode: 500, body: err.message };
+    }
+};
+
 export {
     registerMessageBoard,
-    createMessageBoard
+    createMessageBoard,
+    getMessageBoards
 };

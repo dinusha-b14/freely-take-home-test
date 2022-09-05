@@ -85,6 +85,13 @@ functions:
           path: /users
           method: get
   
+  getMessageBoards:
+    handler: dist/handlers/messageBoards.getMessageBoards
+    events:
+      - httpApi:
+          path: /message-boards
+          method: get
+
   createMessageBoard:
     handler: dist/handlers/messageBoards.createMessageBoard
     events:

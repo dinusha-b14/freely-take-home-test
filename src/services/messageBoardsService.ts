@@ -2,7 +2,7 @@
 
 import * as uuid from 'uuid';
 import { ValidationResult } from 'joi';
-import { PutCommandOutput } from '@aws-sdk/lib-dynamodb';
+import { PutCommandOutput, QueryCommandOutput } from '@aws-sdk/lib-dynamodb';
 import { SendMessageCommand, SendMessageCommandOutput } from '@aws-sdk/client-sqs';
 import FreelyError from '../errors/freelyError';
 import dbDocClient from '../config/dbDocClient';
@@ -32,9 +32,19 @@ const createNewMessageBoard = ({ topic }: NewMessageBoardParameters): Promise<Se
         MessageBody: JSON.stringify(value),
         QueueUrl: process.env.SQS_MESSAGE_BOARD_URL
     }));
+};
+
+const getAllMessageBoards = async () => {
+    const { Items: messageBoards } = await dbDocClient.scan({
+        TableName: process.env.MESSAGE_BOARDS_TABLE
+    });
+
+    // Should of course be paginated in real life but for this exercise I decided to go with a simple scan.
+    return messageBoards;
 }
 
 export {
     registerNewMessageBoard,
-    createNewMessageBoard
+    createNewMessageBoard,
+    getAllMessageBoards
 };
