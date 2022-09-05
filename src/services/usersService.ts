@@ -2,30 +2,31 @@
 
 import * as uuid from 'uuid';
 import { ValidationResult } from 'joi';
-import { PutItemCommand, PutItemOutput } from '@aws-sdk/client-dynamodb';
 import { PublishCommand, PublishCommandOutput } from '@aws-sdk/client-sns';
+import { PutCommandOutput } from '@aws-sdk/lib-dynamodb';
 import FreelyError from '../errors/freelyError';
-import dbClient from '../config/dbClient';
+import dbDocClient from '../config/dbDocClient';
 import snsClient from '../config/snsClient';
 import { createUserSchema } from '../schemas/usersSchema';
+
 
 interface NewUserParameters {
     name: string,
     email: string
 };
 
-const registerNewUser = ({ name, email }: NewUserParameters): Promise<PutItemOutput> => {
-    const dbParams = {
-        TableName: process.env.USERS_TABLE,
-        Item: {
-            userId: { S: uuid.v4() },
-            name: { S: name },
-            email: { S: email }
-        }
-    };
-    
-    return dbClient.send(new PutItemCommand(dbParams));
+interface GetUserParameters {
+    email: string
 };
+
+const registerNewUser = ({ name, email }: NewUserParameters): Promise<PutCommandOutput> => dbDocClient.put({
+    TableName: process.env.USERS_TABLE,
+    Item: {
+        userId: uuid.v4(),
+        name,
+        email
+    }
+});
 
 const createNewUser = ({ name, email }: NewUserParameters): Promise<PublishCommandOutput> => {
     const { value, error }: ValidationResult = createUserSchema.validate({ name, email });
@@ -40,7 +41,25 @@ const createNewUser = ({ name, email }: NewUserParameters): Promise<PublishComma
     }));
 };
 
+const getUsersByEmail = async ({ email }: GetUserParameters) => {
+    const { Items: [userForEmail] } = await dbDocClient.query({
+        TableName: process.env.USERS_TABLE,
+        IndexName: 'UserEmailIndex',
+        KeyConditionExpression: 'email = :email',
+        ExpressionAttributeValues: {
+            ':email': email
+        }
+    });
+
+    if (!userForEmail) {
+        throw new FreelyError(404, 'User not found for email');
+    }
+
+    return userForEmail;
+};
+
 export {
     registerNewUser,
-    createNewUser
+    createNewUser,
+    getUsersByEmail
 };

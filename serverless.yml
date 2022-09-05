@@ -36,6 +36,10 @@ provider:
           Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-usersTable-${sls:stage}"
         - Effect: Allow
           Action:
+            - dynamodb:Query
+          Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-usersTable-${sls:stage}/index/UserEmailIndex"
+        - Effect: Allow
+          Action:
             - SNS:Publish
           Resource: "arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}"
 
@@ -52,6 +56,13 @@ functions:
           path: /users
           method: post
 
+  getUser:
+    handler: dist/handlers/users.getUser
+    events:
+      - httpApi:
+          path: /users
+          method: get
+
 resources:
   Resources:
     UsersTable:
@@ -60,8 +71,17 @@ resources:
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: email
+            AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:service}-usersTable-${sls:stage}
+        GlobalSecondaryIndexes:
+          - IndexName: UserEmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
