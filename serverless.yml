@@ -13,8 +13,9 @@ package:
     - '!jest.config.json'
 
 custom:
-  snsTopic: userRegistrations
-  sqsTopic: messageBoardRegistrations
+  userRegistrationsSnsTopic: userRegistrations
+  messageBoardRegistrationsSqsTopic: messageBoardRegistrations
+  messageRegistrationsSnsTopic: messageRegistrations
 
 provider:
   name: aws
@@ -22,10 +23,12 @@ provider:
   environment:
     USERS_TABLE: ${self:service}-usersTable-${sls:stage}
     MESSAGE_BOARDS_TABLE: ${self:service}-messageBoardsTable-${sls:stage}
+    MESSAGES_TABLE: ${self:service}-messagesTable-${sls:stage}
     DEPLOYED_AWS_REGION: ${aws:region}
-    SNS_TOPIC_ARN: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}
-    SQS_TOPIC_ARN: arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.sqsTopic}
-    SQS_MESSAGE_BOARD_URL: https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/${self:custom.sqsTopic}
+    USER_REGISTRATIONS_SNS_TOPIC_ARN: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.userRegistrationsSnsTopic}
+    MESSAGE_REGISTRATIONS_SNS_TOPIC_ARN: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.messageRegistrationsSnsTopic}
+    SQS_TOPIC_ARN: arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.messageBoardRegistrationsSqsTopic}
+    SQS_MESSAGE_BOARD_URL: https://sqs.${aws:region}.amazonaws.com/${aws:accountId}/${self:custom.messageBoardRegistrationsSqsTopic}
   iam:
     role:
       statements:
@@ -50,26 +53,44 @@ provider:
         - Effect: Allow
           Action:
             - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-messagesTable-${sls:stage}"
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
           Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-usersTable-${sls:stage}/index/UserEmailIndex"
         - Effect: Allow
           Action:
             - SNS:Publish
-          Resource: "arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.snsTopic}"
+          Resource: "arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.userRegistrationsSnsTopic}"
+        - Effect: Allow
+          Action:
+            - SNS:Publish
+          Resource: "arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.messageRegistrationsSnsTopic}"
         - Effect: Allow
           Action:
             - SQS:SendMessage
-          Resource: "arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.sqsTopic}"
+          Resource: "arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.messageBoardRegistrationsSqsTopic}"
 
 functions:
   registerUser:
     handler: dist/handlers/users.registerUser
     events:
-      - sns: ${self:custom.snsTopic}
+      - sns: ${self:custom.userRegistrationsSnsTopic}
 
   registerMessageBoard:
     handler: dist/handlers/messageBoards.registerMessageBoard
     events:
-      - sqs: arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.sqsTopic}
+      - sqs: arn:aws:sqs:${aws:region}:${aws:accountId}:${self:custom.messageBoardRegistrationsSqsTopic}
+  
+  registerMessage:
+    handler: dist/handlers/messages.registerMessage
+    events:
+      - sns: ${self:custom.messageRegistrationsSnsTopic}
 
   createUser:
     handler: dist/handlers/users.createUser
@@ -97,6 +118,13 @@ functions:
     events:
       - httpApi:
           path: /message-boards
+          method: post
+  
+  createMessage:
+    handler: dist/handlers/messages.createMessage
+    events:
+      - httpApi:
+          path: /message-boards/{messageBoardId}/messages
           method: post
 
 resources:
@@ -132,3 +160,18 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:service}-messageBoardsTable-${sls:stage}
+    MessagesTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: messageBoardId
+            AttributeType: S
+          - AttributeName: userAndMessageId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: messageBoardId
+            KeyType: HASH
+          - AttributeName: userAndMessageId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:service}-messagesTable-${sls:stage}

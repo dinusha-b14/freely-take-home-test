@@ -1,7 +1,8 @@
 'use strict';
 
-import * as usersService from '../services/usersService';
 import { APIGatewayEvent, Context, SNSEvent } from 'aws-lambda';
+import * as usersService from '../services/usersService';
+
 
 const registerUser = async (event: SNSEvent, _context: Context) => {
     const [{ Sns: { Message: snsMessage }}] = event.Records;

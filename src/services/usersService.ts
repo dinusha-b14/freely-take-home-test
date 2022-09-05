@@ -27,8 +27,8 @@ const registerNewUser = ({ name, email }: NewUserParameters): Promise<PutCommand
     }
 });
 
-const createNewUser = ({ name, email }: NewUserParameters): Promise<PublishCommandOutput> => {
-    const { value, error }: ValidationResult = createUserSchema.validate({ name, email });
+const createNewUser = (createNewUserParameters: NewUserParameters): Promise<PublishCommandOutput> => {
+    const { value, error }: ValidationResult = createUserSchema.validate(createNewUserParameters);
 
     if (error) {
         throw new FreelyError(400, JSON.stringify(error.details));
@@ -36,7 +36,7 @@ const createNewUser = ({ name, email }: NewUserParameters): Promise<PublishComma
 
     return snsClient.send(new PublishCommand({
         Message: JSON.stringify(value),
-        TopicArn: process.env.SNS_TOPIC_ARN
+        TopicArn: process.env.USER_REGISTRATIONS_SNS_TOPIC_ARN
     }));
 };
 

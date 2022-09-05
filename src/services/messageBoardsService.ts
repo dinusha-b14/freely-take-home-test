@@ -21,8 +21,8 @@ const registerNewMessageBoard = ({ topic }: NewMessageBoardParameters): Promise<
     }
 });
 
-const createNewMessageBoard = ({ topic }: NewMessageBoardParameters): Promise<SendMessageCommandOutput> => {
-    const { value, error }: ValidationResult = messageBoardsSchema.validate({ topic });
+const createNewMessageBoard = (createNewMessageBoardParameters: NewMessageBoardParameters): Promise<SendMessageCommandOutput> => {
+    const { value, error }: ValidationResult = messageBoardsSchema.validate(createNewMessageBoardParameters);
 
     if (error) {
         throw new FreelyError(400, JSON.stringify(error.details));
