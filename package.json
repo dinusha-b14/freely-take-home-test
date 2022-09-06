@@ -2,7 +2,8 @@
   "name": "freely-take-home-test",
   "version": "1.0.0",
   "scripts": {
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "build": "tsc"
   },
   "author": "Dinusha (Dan) Bodhinayake",
   "devDependencies": {
